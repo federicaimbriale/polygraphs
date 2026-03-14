@@ -13,7 +13,7 @@ class BaseFactCheckersOp(UnreliableOp):
     user = 2
 
     def __init__(self, graph, params, silent=True):
-        super().__init__(graph, params, silent=silent)
+        super().__init__(graph, params)
 
         self.current_step = 0
         self.fact_checkers_activated = False
