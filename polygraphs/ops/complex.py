@@ -22,7 +22,7 @@ class UnreliableOp(BalaGoyalOp):
     Upon receipt, all nodes apply Bayes rule.
     """
 
-    def __init__(self, graph, params):
+    def __init__(self, graph, params, silent=False):
         super().__init__(graph, params)
         # The shape of all node attributes
         self._size = (graph.num_nodes(),)
