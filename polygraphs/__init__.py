@@ -236,6 +236,7 @@ def simulate(params, op=None, **meta):  # pylint: disable=invalid-name
         result = simulate_(
             graph,
             model,
+			params,
             steps=params.simulation.steps,
             mistrust=params.mistrust,
             lowerupper=params.lowerupper,
