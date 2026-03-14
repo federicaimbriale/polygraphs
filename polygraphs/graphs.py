@@ -385,34 +385,75 @@ def gml(params):
     """
     assert params.gml.name, "gml.name GML network name not specified"
     assert params.gml.path, "gml.path GML file not specified"
+
     # Resolve GML file
     gml_file = os.path.abspath(os.path.expanduser(params.gml.path))
     assert os.path.isfile(gml_file), "GML file not found"
+
     # Load graph from GML file
     G = nx.read_gml(gml_file, destringizer=int)
+
     # Load graph using edge list so that we preserve node ids
-    edges = []
+    edges = [(u, v) for u, v, _ in nx.to_edgelist(G)]
+    if not edges:
+        raise RuntimeError("GML file loaded but contains no edges.")
 
-    for edge in list(nx.to_edgelist(G)):
-        try:
-            edges.append((int(edge[0]), int(edge[1])))
-        except:
-            raise ValueError("GML File: Node IDs should be specified as integers")
+    # Remap node IDs to integers
+    nodes = {}
+    src, dst = [], []
+    for u, v in edges:
+        if u not in nodes:
+            nodes[u] = len(nodes)
+        if v not in nodes:
+            nodes[v] = len(nodes)
+        src.append(nodes[u])
+        dst.append(nodes[v])
 
-    # Create normalised table
-    tbl = defaultdict(lambda: len(tbl))
-
-    # Normalise node identifiers (from 0 to N) using default dict
-    normalised_edges = [(tbl[edge[0]], tbl[edge[1]]) for edge in edges]
-
-    graph = dgl.graph(normalised_edges)
-
-    # Convert to a bi-directed DGL graph for undirected graphs
+    # Build DGL graph
+    graph = dgl.graph((src, dst), num_nodes=len(nodes))
     if not params.gml.directed:
         graph = dgl.to_bidirected(graph)
 
-    # Save original node ids as a node attribute
-    graph.ndata['gml_id'] = torch.tensor(list(tbl.keys()))
+    # Store original IDs (index i -> original node id)
+    graph.gml_id = list(nodes.keys())
+
+    # -------------------------
+    # COPY NODE ATTRIBUTES (general)
+    # Assumption: all node-attribute values you care about are already numeric
+    # -------------------------
+    inv = {new_id: orig_id for orig_id, new_id in nodes.items()}  # new_id -> original_id
+
+    # collect all attribute names appearing on any node
+    attr_names = set()
+    for orig_id in inv.values():
+        attr_names.update(G.nodes[orig_id].keys())
+
+    for attr in sorted(attr_names):
+        vals = []
+        ok_numeric = True
+
+        for i in range(graph.num_nodes()):
+            orig_id = inv[i]
+            v = G.nodes[orig_id].get(attr, 0)
+
+            # Treat missing as 0; reject non-numeric values
+            if isinstance(v, (int, float, bool, np.integer, np.floating, np.bool_)):
+                vals.append(v)
+            else:
+                ok_numeric = False
+                break
+
+        if not ok_numeric:
+            # Skip attributes that aren't numeric 
+            continue
+
+        # Use int64 if values look like integers/bools, else float32
+        all_intlike = all(float(v).is_integer() for v in vals)
+        if all_intlike:
+            graph.ndata[attr] = torch.tensor(vals, dtype=torch.int64)
+        else:
+            graph.ndata[attr] = torch.tensor(vals, dtype=torch.float32)
+
     return graph
 
 
