@@ -398,6 +398,7 @@ class SimulationHyperParameters(HyperParameters):
         params.results
         params.repeats
         params.steps
+        params.block
     """
 
     def __init__(self):
