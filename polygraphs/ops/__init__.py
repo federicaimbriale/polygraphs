@@ -31,6 +31,9 @@ from .complex import (
 
 from .weightedops import BalaGoyalWeighted2Op, BalaGoyalWeightedOp
 
+from .factcheckingops import BaseFactCheckersOp, FactCheckersGulBinOp, FactCheckersGulNegEpsOp
+
+
 __all__ = [
     "PolyGraphOp",
     "BalaGoyalOp",
@@ -51,6 +54,9 @@ __all__ = [
     "UnreliableNetworkModifiedAlignedNegativeEpsOp",
     "BalaGoyalWeightedOp",
     "BalaGoyalWeighted2Op",
+    "FactCheckersGulBinOp",
+    "FactCheckersGulNegEpsOp"
+    
 ]
 
 
