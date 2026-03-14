@@ -259,7 +259,7 @@ def simulate(params, op=None, **meta):  # pylint: disable=invalid-name
 
 
 def simulate_(
-    graph, model, steps=1, hooks=None, mistrust=0.0, lowerupper=0.5, upperlower=0.99
+    graph, model, params, steps=1, hooks=None, mistrust=0.0, lowerupper=0.5, upperlower=0.99
 ):
     """
     Runs a simulation either for a finite number of steps or until convergence.
@@ -281,6 +281,10 @@ def simulate_(
     terminated = None
     while cond(step):
         step += 1
+	# Update FactCheckersOp with current step
+        if isinstance(model, ops.BaseFactCheckersOp):
+            model.set_current_step(step)
+            model.block(graph, params) 
         # Forward operation on the graph
         _ = model(graph)
         # Monitor progress
