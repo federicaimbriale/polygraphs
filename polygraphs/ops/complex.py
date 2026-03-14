@@ -24,6 +24,7 @@ class UnreliableOp(BalaGoyalOp):
 
     def __init__(self, graph, params, silent=False):
         super().__init__(graph, params)
+        self._silent = silent
         # The shape of all node attributes
         self._size = (graph.num_nodes(),)
 
