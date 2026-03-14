@@ -42,9 +42,9 @@ class UnreliableOp(BalaGoyalOp):
         # Store network reliability
         graph.ndata["reliability"] = self._reliability.to(device=self._device)
 
-        # Count number of reliable nodes (for debugging purposes)
-        nr = torch.count_nonzero(self._reliability)
-        log.info(f"{nr.item()} out of {graph.num_nodes()} nodes are reliable")
+        if not silent:
+            nr = torch.count_nonzero(self._reliability)
+            log.info(f"{nr.item()} out of {graph.num_nodes()} nodes are reliable")
 
     def sample(self):
         """
