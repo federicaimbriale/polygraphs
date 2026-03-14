@@ -405,6 +405,7 @@ class SimulationHyperParameters(HyperParameters):
         self.add(results="auto")
         self.add(repeats=1)
         self.add(steps=0)
+        self.add(block=0)
 
 
 class PolyGraphHyperParameters(HyperParameters):
@@ -440,6 +441,7 @@ class PolyGraphHyperParameters(HyperParameters):
         params.simulation.results
         params.simulation.repeats
         params.simulation.steps
+        params.simulation.block
     """
 
     def __init__(self):
