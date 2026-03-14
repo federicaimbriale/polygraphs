@@ -31,7 +31,7 @@ from .complex import (
 
 from .weightedops import BalaGoyalWeighted2Op, BalaGoyalWeightedOp
 
-from .factcheckingops import BaseFactCheckersOp, FactCheckersGulBinOp, FactCheckersGulNegEpsOp
+from .fact_checking import BaseFactCheckersOp, FactCheckersGulBinOp, FactCheckersGulNegEpsOp
 
 
 __all__ = [
