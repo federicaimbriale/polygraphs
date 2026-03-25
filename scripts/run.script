@@ -1,0 +1,40 @@
+#!/bin/bash
+#SBATCH --partition=short
+#SBATCH --time=48:00:00
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=16
+#SBATCH --mem=32GB
+#SBATCH --job-name=c_twitter3_BG
+#SBATCH --array=1-20
+#SBATCH --export=ALL
+#SBATCH --output=/home/f.imbriale/polygraphs-cache/slurm/%A_%a.out
+#SBATCH --error=/home/f.imbriale/polygraphs-cache/slurm/%A_%a.err
+
+set -e  # crash on error
+
+source /home/f.imbriale/my_polygraphs/.venv/bin/activate
+
+cd /home/f.imbriale/my_polygraphs/polygraphs
+
+# FORCE correct cache path
+export POLYGRAPHS_CACHE=/home/f.imbriale/polygraphs-cache/results
+
+# Seed 
+SEED=$((100000000 + SLURM_ARRAY_JOB_ID + SLURM_ARRAY_TASK_ID))
+
+TMP_CONFIG=configs/config_${SLURM_JOB_ID}_${SLURM_ARRAY_TASK_ID}.yaml
+
+# Copy config
+cp configs/twitter_bg.yaml $TMP_CONFIG
+
+# Replace seed (only if it exists)
+sed -i "s/^\([[:space:]]*seed:\).*/\1 $SEED/" $TMP_CONFIG
+
+# Run
+echo "Starting Python..."
+python run.py -f $TMP_CONFIG
+
+# remove temporary configuration
+rm -f $TMP_CONFIG
+
