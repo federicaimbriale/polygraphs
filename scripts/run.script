@@ -13,26 +13,27 @@
 
 set -e  # crash on error
 
-source /home/f.imbriale/my_polygraphs/.venv/bin/activate
+BASE_DIR=$HOME/my_polygraphs #your environment directory 
 
-cd /home/f.imbriale/my_polygraphs/polygraphs
+source $BASE_DIR/.venv/bin/activate 
+
+cd $BASE_DIR/polygraphs
 
 # FORCE correct cache path
 export POLYGRAPHS_CACHE=/home/f.imbriale/polygraphs-cache/results
 
-# Seed 
+# Generate seed using unique array job and task id  
 SEED=$((100000000 + SLURM_ARRAY_JOB_ID + SLURM_ARRAY_TASK_ID))
 
 TMP_CONFIG=configs/config_${SLURM_JOB_ID}_${SLURM_ARRAY_TASK_ID}.yaml
 
-# Copy config
+# Copy desired config
 cp configs/twitter_bg.yaml $TMP_CONFIG
 
 # Replace seed (only if it exists)
 sed -i "s/^\([[:space:]]*seed:\).*/\1 $SEED/" $TMP_CONFIG
 
 # Run
-echo "Starting Python..."
 python run.py -f $TMP_CONFIG
 
 # remove temporary configuration
