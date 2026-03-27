@@ -36,9 +36,7 @@ class BasicHook(metaclass=abc.ABCMeta):
         """
         if not self._isvalid(step):
             return
-        # Store last processed step
         self._last = step
-        # User-defined run method
         self._run(step, polygraph)
 
     def conclude(self, step, polygraph):
@@ -57,31 +55,21 @@ class MonitorHook(BasicHook):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # Timer that starts after the first step
-        # used to measure throughput (steps/s)
         self._clock = timer.Timer()
 
     def _run(self, step, polygraph):
-        # Compute throughput
         if not self._clock.isrunning():
-            # Ensure this is the first step
             assert step == 1
-            # Start the clock
             self._clock.start()
-            # Report 0 steps/s
             throughput = 0.0
         else:
-            # Time elapsed since clock started
-            dt = self._clock.lap()  # pylint: disable=invalid-name
+            dt = self._clock.lap()
             throughput = ((step - 1) / dt) / 1000.0
-            
-        # Number of nodes that believe action A (resp. B) is better
+
         beliefs = polygraph.ndata["beliefs"]
-        a, b = torch.sum(  # pylint: disable=invalid-name
+        a, b = torch.sum(
             torch.le(beliefs, 0.5)
         ), torch.sum(torch.gt(beliefs, 0.5))
-        # print(beliefs)
-        # Log progress
         msg = "[MON]"
         msg = f"{msg} step {step:04d}"
         msg = f"{msg} Ksteps/s {throughput:6.2f}"
@@ -91,36 +79,46 @@ class MonitorHook(BasicHook):
 
 class SnapshotHook(BasicHook):
     """
-    Periodic logger for agent beliefs
+    Periodic logger for agent beliefs (and reliability if present).
+    Also saves reliability so the simulation can be resumed correctly.
     """
 
     def __init__(self, messages=False, location=None, filename="data.hd5", **kwargs):
         super().__init__(**kwargs)
-        # Store snapshots in user-specified directory
         assert location and os.path.isdir(location)
-        # Construct HDF5 filename
         self._filename = os.path.join(location, filename)
-        # Whether to snapshot messages or not
         self._messages = messages
 
     def _run(self, step, polygraph):
-        # Create dataset file, or read/write if exists
-        f = h5py.File(self._filename, "a")  # pylint: disable=invalid-name
+        # Open HDF5 file in append mode
+        f = h5py.File(self._filename, "a")
 
         # Store beliefs
         beliefs = polygraph.ndata["beliefs"].cpu().numpy()
-        # Create or modify group
         grp = f.require_group("beliefs")
-        # Create new dataset
+        # Overwrite if step already exists (can happen on resume)
+        if str(step) in grp:
+            del grp[str(step)]
         grp.create_dataset(str(step), data=beliefs)
-        
-        # Store messages
+
+        # Store reliability if present
+        # This is essential for resuming simulations that use UnreliableOp,
+        # where reliability is randomly assigned once per repeat.
+        if "reliability" in polygraph.ndata:
+            reliability = polygraph.ndata["reliability"].cpu().numpy()
+            grp_rel = f.require_group("reliability")
+            # We only need to store it once — use step as key for consistency
+            # but always overwrite so we always have the latest
+            if str(step) in grp_rel:
+                del grp_rel[str(step)]
+            grp_rel.create_dataset(str(step), data=reliability)
+
+        # Store payoffs/messages if requested
         if self._messages:
             payoffs = polygraph.ndata["payoffs"].cpu().numpy()
-            # Create or modify group
             grp = f.require_group("payoffs")
-            # Create new dataset
+            if str(step) in grp:
+                del grp[str(step)]
             grp.create_dataset(str(step), data=payoffs)
 
-        # Close file
         f.close()
