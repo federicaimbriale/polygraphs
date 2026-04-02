@@ -1,6 +1,8 @@
-dgl==2.4.0+cu118 
+--extra-index-url https://download.pytorch.org/whl/cu118
+--find-links https://data.dgl.ai/wheels/torch-2.1/cu118/repo.html
 torch==2.4.0
-urllib3==1.26.18
+dgl==2.4.0+cu118
+urllib3==1.26.13
 pydantic
 notebook
 matplotlib
