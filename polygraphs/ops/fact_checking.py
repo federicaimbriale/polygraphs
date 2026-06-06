@@ -5,8 +5,9 @@ Ops that contain fact-checkers
 import abc
 import torch
 
-from .complex import UnreliableOp,  UnreliableNetworkBasicGullibleBinomialOp, UnreliableNetworkBasicGullibleNegativeEpsOp
-  
+from .complex import UnreliableOp, UnreliableNetworkBasicGullibleBinomialOp, UnreliableNetworkBasicGullibleNegativeEpsOp
+
+
 class BaseFactCheckersOp(UnreliableOp):
     fact_checker = 0
     unreliable = 1
@@ -24,8 +25,14 @@ class BaseFactCheckersOp(UnreliableOp):
             self.user: "Users"
         }
 
-        weights = torch.tensor([0.10, 1 - (params.reliability), 0.65], dtype=torch.float)
-  
+        fc_ratio = params.fact_checker_ratio  # fraction of reliable nodes that are fact-checkers
+        reliable = params.reliability
+
+        weights = torch.tensor([
+            reliable * fc_ratio,
+            1 - reliable,
+            reliable * (1 - fc_ratio),
+        ], dtype=torch.float)
 
         group_assignments = torch.multinomial(weights, graph.num_nodes(), replacement=True)
         graph.ndata['group'] = group_assignments.to(self._device)
@@ -75,8 +82,10 @@ class BaseFactCheckersOp(UnreliableOp):
 
         return function
 
+
 class FactCheckersGulBinOp(BaseFactCheckersOp, UnreliableNetworkBasicGullibleBinomialOp):
     pass
+
 
 class FactCheckersGulNegEpsOp(UnreliableNetworkBasicGullibleNegativeEpsOp, BaseFactCheckersOp):
     pass
