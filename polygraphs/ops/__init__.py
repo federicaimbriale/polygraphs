@@ -31,8 +31,17 @@ from .complex import (
 
 from .weightedops import BalaGoyalWeighted2Op, BalaGoyalWeightedOp
 
-from .fact_checking import BaseFactCheckersOp, FactCheckersGulBinOp, FactCheckersGulNegEpsOp
-
+from .fact_checking import (
+    BaseFactCheckersOp, 
+    FactCheckersGulBinOp, 
+    FactCheckersGulNegEpsOp,
+    FactCheckersCentralOp,
+    UnreliableCentralOp,
+    UnreliableCentralGulBinOp,
+    UnreliableCentralGulNegEpsOp,
+    FactCheckersCentralGulNegEpsOp,
+    FactCheckersCentralGulBinOp
+)
 
 __all__ = [
     "PolyGraphOp",
@@ -55,8 +64,11 @@ __all__ = [
     "BalaGoyalWeightedOp",
     "BalaGoyalWeighted2Op",
     "FactCheckersGulBinOp",
-    "FactCheckersGulNegEpsOp"
-    
+    "FactCheckersGulNegEpsOp",
+    "FactCheckersCentralGulBinOp",
+    "FactCheckersCentralGulNegEpsOp",
+    "UnreliableCentralGulBinOp",
+    "UnreliableCentralGulNegEpsOp", 
 ]
 
 
@@ -71,6 +83,11 @@ def getbyname(name):
             if name.lower() == operator.lower():
                 return getattr(sys.modules[__name__], operator)
         return None
+
+    operator = _find()
+    if operator is None:
+        raise Exception(f"Invalid operator name: {name}")
+    return operator
 
     operator = _find()
     if operator is None:
